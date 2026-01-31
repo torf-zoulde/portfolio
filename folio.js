@@ -15,7 +15,8 @@ window.addEventListener('resize', resizeCanvas);
 
 // Particules
 const particles = [];
-const particleCount = 100;
+// Réduire le nombre de particules sur mobile pour de meilleures performances
+const particleCount = window.innerWidth < 768 ? 50 : 100;
 
 class Particle {
     constructor() {
@@ -90,12 +91,14 @@ const menu = document.getElementById('menu');
 menuBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     menu.classList.toggle('active');
+    menuBtn.classList.toggle('active');
 });
 
 // Fermer le menu si on clique ailleurs
 document.addEventListener('click', (e) => {
     if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
         menu.classList.remove('active');
+        menuBtn.classList.remove('active');
     }
 });
 
@@ -103,6 +106,7 @@ document.addEventListener('click', (e) => {
 document.querySelectorAll('.menu-link').forEach(link => {
     link.addEventListener('click', () => {
         menu.classList.remove('active');
+        menuBtn.classList.remove('active');
     });
 });
 
