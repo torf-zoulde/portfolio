@@ -2,7 +2,8 @@
 // CONFIGURATION API
 // ===================================
 // IMPORTANT: Changez cette URL selon votre environnement
-const API_URL = 'http://localhost:3000/api';
+const API_URL = `${window.location.origin}/api`;
+
 // En production, remplacez par: const API_URL = 'https://votre-domaine.com/api';
 
 // ===================================
