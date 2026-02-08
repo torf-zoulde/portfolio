@@ -1,88 +1,84 @@
 // ===================================
-// CONFIGURATION API
+// UTILISER LA CONFIGURATION
 // ===================================
-// IMPORTANT: Changez cette URL selon votre environnement
-const API_URL = `${window.location.origin}/api`;
-
-// En production, remplacez par: const API_URL = 'https://votre-domaine.com/api';
+const API_URL = window.API_CONFIG ? window.API_CONFIG.API_URL : 'http://localhost:3000/api';
 
 // ===================================
 // CANVAS BACKGROUND ANIMATION
 // ===================================
 const canvas = document.getElementById('creative-bg');
-const ctx = canvas.getContext('2d');
+if (canvas) {
+    const ctx = canvas.getContext('2d');
 
-// Fonction pour redimensionner le canvas
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
-// Particules
-const particles = [];
-const particleCount = window.innerWidth < 768 ? 50 : 100;
-
-class Particle {
-    constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.vx = (Math.random() - 0.5) * 0.8;
-        this.vy = (Math.random() - 0.5) * 0.8;
-        this.radius = Math.random() * 2 + 1;
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
     }
 
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
-        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-    }
+    const particles = [];
+    const particleCount = window.innerWidth < 768 ? 50 : 100;
 
-    draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(14, 165, 233, 0.6)';
-        ctx.fill();
-    }
-}
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.vx = (Math.random() - 0.5) * 0.8;
+            this.vy = (Math.random() - 0.5) * 0.8;
+            this.radius = Math.random() * 2 + 1;
+        }
 
-for (let i = 0; i < particleCount; i++) {
-    particles.push(new Particle());
-}
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+        }
 
-function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    particles.forEach(particle => {
-        particle.update();
-        particle.draw();
-    });
-
-    for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-            const dx = particles[i].x - particles[j].x;
-            const dy = particles[i].y - particles[j].y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < 120) {
-                ctx.beginPath();
-                ctx.strokeStyle = `rgba(14, 165, 233, ${1 - distance / 120})`;
-                ctx.lineWidth = 0.5;
-                ctx.moveTo(particles[i].x, particles[i].y);
-                ctx.lineTo(particles[j].x, particles[j].y);
-                ctx.stroke();
-            }
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(14, 165, 233, 0.6)';
+            ctx.fill();
         }
     }
 
-    requestAnimationFrame(animate);
-}
+    for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+    }
 
-animate();
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        particles.forEach(particle => {
+            particle.update();
+            particle.draw();
+        });
+
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < 120) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(14, 165, 233, ${1 - distance / 120})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+}
 
 // ===================================
 // MENU MOBILE TOGGLE
@@ -181,13 +177,12 @@ const skillObserver = new IntersectionObserver((entries) => {
 skillBars.forEach(bar => skillObserver.observe(bar));
 
 // ===================================
-// FORMULAIRE CONTACT - CORRIGÉ
+// FORMULAIRE CONTACT
 // ===================================
 const btnContact = document.getElementById('btn-contact');
 const formContact = document.getElementById('form-contact');
 
 if (btnContact && formContact) {
-    // Afficher/masquer le formulaire
     btnContact.addEventListener('click', () => {
         formContact.classList.toggle('active');
         
@@ -198,7 +193,6 @@ if (btnContact && formContact) {
         }
     });
 
-    // Soumettre le formulaire avec envoi vers l'API
     formContact.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -207,52 +201,39 @@ if (btnContact && formContact) {
         const sujet = document.getElementById('sujet').value.trim();
         const message = document.getElementById('message').value.trim();
         
-        // Validation
         if (!nom || !email || !sujet || !message) {
             showNotification('Veuillez remplir tous les champs', 'error');
             return;
         }
         
-        // Désactiver le bouton pendant l'envoi
         const submitBtn = formContact.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn.innerHTML;
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
         
         try {
-            // Envoyer les données à l'API
             const response = await fetch(`${API_URL}/messages`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    nom,
-                    email,
-                    sujet,
-                    message
-                })
+                body: JSON.stringify({ nom, email, sujet, message })
             });
             
             const data = await response.json();
             
             if (response.ok) {
-                // Succès
                 showNotification('Message envoyé avec succès ! 🎉', 'success');
-                
-                // Réinitialiser le formulaire
                 formContact.reset();
                 formContact.classList.remove('active');
                 btnContact.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer un message';
             } else {
-                // Erreur serveur
                 showNotification(data.error || 'Erreur lors de l\'envoi du message', 'error');
             }
         } catch (error) {
             console.error('Erreur:', error);
             showNotification('Impossible de contacter le serveur. Vérifiez votre connexion.', 'error');
         } finally {
-            // Réactiver le bouton
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnText;
         }
@@ -263,13 +244,11 @@ if (btnContact && formContact) {
 // FONCTION DE NOTIFICATION
 // ===================================
 function showNotification(message, type = 'info') {
-    // Supprimer les notifications existantes
     const existingNotif = document.querySelector('.notification');
     if (existingNotif) {
         existingNotif.remove();
     }
     
-    // Créer la notification
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     
@@ -281,17 +260,14 @@ function showNotification(message, type = 'info') {
         <i class="fas ${icon}"></i>
         <span>${message}</span>
     `;
-    Admin
-    // Ajouter au DOM
+    
     document.body.appendChild(notification);
     
-    // Animation d'entrée
     setTimeout(() => {
         notification.style.transform = 'translateX(0)';
         notification.style.opacity = '1';
     }, 10);
     
-    // Supprimer après 5 secondes
     setTimeout(() => {
         notification.style.transform = 'translateX(400px)';
         notification.style.opacity = '0';
@@ -299,6 +275,66 @@ function showNotification(message, type = 'info') {
             notification.remove();
         }, 300);
     }, 5000);
+}
+
+// ===================================
+// LOGIN ADMIN
+// ===================================
+const loginForm = document.getElementById('login-form');
+const errorMessage = document.getElementById('error-message');
+const errorText = document.getElementById('error-text');
+const loadingIndicator = document.getElementById('loading-indicator');
+const togglePassword = document.getElementById('toggle-password');
+
+if (togglePassword) {
+    togglePassword.addEventListener('click', () => {
+        const passwordInput = document.getElementById('password');
+        const icon = togglePassword.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    });
+}
+
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorMessage.style.display = 'none';
+        loadingIndicator.style.display = 'flex';
+
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+
+        try {
+            const response = await fetch(`${API_URL}/admin/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+            loadingIndicator.style.display = 'none';
+
+            if (response.ok) {
+                window.location.href = data.redirect;
+            } else {
+                errorText.textContent = data.error || 'Erreur de connexion';
+                errorMessage.style.display = 'flex';
+            }
+        } catch (err) {
+            loadingIndicator.style.display = 'none';
+            errorText.textContent = 'Impossible de contacter le serveur';
+            errorMessage.style.display = 'flex';
+            console.error(err);
+        }
+    });
 }
 
 // ===================================
@@ -403,46 +439,6 @@ if (isMobile) {
 }
 
 // ===================================
-// GESTION DES ERREURS D'IMAGES
-// ===================================
-document.querySelectorAll('img').forEach(img => {
-    img.addEventListener('error', function() {
-        this.style.display = 'none';
-        const placeholder = document.createElement('div');
-        placeholder.className = 'img-placeholder';
-        placeholder.innerHTML = '<i class="fas fa-image"></i>';
-        this.parentNode.appendChild(placeholder);
-    });
-});
-
-// ===================================
-// CONSOLE MESSAGE
-// ===================================
-console.log(
-    '%c👋 Bienvenue sur mon portfolio !',
-    'color: #0ea5e9; font-size: 20px; font-weight: bold;'
-);
-console.log(
-    '%cSi vous regardez le code, vous êtes probablement un développeur comme moi ! 😊',
-    'color: #38bdf8; font-size: 14px;'
-);
-console.log(
-    '%cN\'hésitez pas à me contacter si vous voulez discuter tech !',
-    'color: #0284c7; font-size: 14px;'
-);
-
-// ===================================
-// PERFORMANCE MONITORING
-// ===================================
-if (window.performance) {
-    window.addEventListener('load', () => {
-        const perfData = window.performance.timing;
-        const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
-        console.log(`⚡ Temps de chargement: ${pageLoadTime}ms`);
-    });
-}
-
-// ===================================
 // TEST DE CONNEXION API AU CHARGEMENT
 // ===================================
 async function testAPIConnection() {
@@ -454,213 +450,26 @@ async function testAPIConnection() {
             console.warn('⚠️ API accessible mais erreur de réponse');
         }
     } catch (error) {
-        console.warn('⚠️ Serveur API non accessible. Assurez-vous que server.js est démarré.');
-        console.warn('➡️ Pour démarrer le serveur: npm start');
+        console.warn('⚠️ Serveur API non accessible.');
+        if (window.API_CONFIG && !window.API_CONFIG.IS_PRODUCTION) {
+            console.warn('➡️ Pour démarrer le serveur: node server.js');
+        }
     }
 }
 
-// Tester la connexion API au chargement (en mode développement)
-if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+// Tester la connexion API en développement
+if (window.API_CONFIG && !window.API_CONFIG.IS_PRODUCTION) {
     testAPIConnection();
 }
 
-// LOGIN ADMIN
-const loginForm = document.getElementById('login-form');
-const errorMessage = document.getElementById('error-message');
-const errorText = document.getElementById('error-text');
-const loadingIndicator = document.getElementById('loading-indicator');
-
-if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        errorMessage.style.display = 'none';
-        loadingIndicator.style.display = 'flex';
-
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value.trim();
-
-        try {
-            const response = await fetch(`${API_URL}/admin/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-
-            const data = await response.json();
-            loadingIndicator.style.display = 'none';
-
-            if (response.ok) {
-                // Redirection vers messages.html
-                window.location.href = data.redirect;
-            } else {
-                errorText.textContent = data.error || 'Erreur de connexion';
-                errorMessage.style.display = 'flex';
-            }
-        } catch (err) {
-            loadingIndicator.style.display = 'none';
-            errorText.textContent = 'Impossible de contacter le serveur';
-            errorMessage.style.display = 'flex';
-            console.error(err);
-        }
-    });
-}
-
-
-
-
-
-
 // ===================================
-// CHARGEMENT DES MESSAGES AVEC MODAL
+// CONSOLE MESSAGE
 // ===================================
-async function loadMessages() {
-    const container = document.getElementById('messages-container');
-    if (!container) return;
-
-    container.innerHTML = `
-        <div class="loading">
-            <i class="fas fa-spinner fa-spin"></i>
-            <p>Chargement des messages...</p>
-        </div>
-    `;
-
-    try {
-        const response = await fetch(`${API_URL}/messages`);
-        if (!response.ok) throw new Error(`HTTP ${response.status} - ${response.statusText}`);
-        const messages = await response.json();
-
-        if (messages.length === 0) {
-            container.innerHTML = '<p>Aucun message reçu pour le moment.</p>';
-            return;
-        }
-
-        container.innerHTML = messages.map(msg => `
-            <div class="message-card ${msg.lu ? 'read' : 'unread'}" data-id="${msg._id}">
-                <div class="message-summary">
-                    <span class="message-nom">${msg.nom}</span>
-                    <span class="message-date">${new Date(msg.createdAt).toLocaleString()}</span>
-                    <button class="btn-view-message">
-                        <i class="fas fa-eye"></i> Voir
-                    </button>
-                </div>
-            </div>
-        `).join('');
-
-        // Ajouter les événements pour ouvrir la modal
-        document.querySelectorAll('.btn-view-message').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const card = btn.closest('.message-card');
-                const id = card.dataset.id;
-                const messageData = messages.find(m => m._id === id);
-                openMessageModal(messageData);
-            });
-        });
-
-    } catch (err) {
-        console.error('Erreur de chargement des messages:', err);
-        container.innerHTML = `<p>Erreur de chargement des messages. ${err.message}</p>`;
-    }
-}
-
-
-
-
-
-
-
-
-
-
-// ===================================
-// MODAL MESSAGE
-// ===================================
-const modal = document.getElementById('message-modal');
-const closeModalBtn = document.getElementById('close-modal');
-
-function openMessageModal(msg) {
-    if (!msg) return;
-    
-    document.getElementById('detail-nom').textContent = msg.nom;
-    document.getElementById('detail-email').textContent = msg.email;
-    document.getElementById('detail-sujet').textContent = msg.sujet;
-    document.getElementById('detail-date').textContent = new Date(msg.createdAt).toLocaleString();
-    document.getElementById('detail-message').textContent = msg.message;
-
-    // Bouton marquer lu/non lu
-    const readStatusText = document.getElementById('read-status-text');
-    const btnToggleRead = document.getElementById('btn-toggle-read');
-    readStatusText.textContent = msg.lu ? 'Marquer comme non lu' : 'Marquer comme lu';
-
-    btnToggleRead.onclick = async () => {
-        try {
-            await fetch(`${API_URL}/messages/${msg._id}/read`, { method: 'PATCH' });
-            modal.style.display = 'none';
-            loadMessages();
-        } catch (err) {
-            console.error(err);
-            alert('Impossible de mettre à jour le statut du message.');
-        }
-    };
-
-    // Bouton supprimer
-    const btnDelete = document.getElementById('btn-delete-message');
-    btnDelete.onclick = () => openConfirmModal(async () => {
-        try {
-            await fetch(`${API_URL}/messages/${msg._id}`, { method: 'DELETE' });
-            modal.style.display = 'none';
-            loadMessages();
-        } catch (err) {
-            console.error(err);
-            alert('Impossible de supprimer le message.');
-        }
-    });
-
-    // Bouton répondre
-    const btnSendResponse = document.getElementById('btn-send-response');
-    btnSendResponse.onclick = () => {
-        const responseText = document.getElementById('response-text').value.trim();
-        if (!responseText) return alert('Veuillez écrire une réponse.');
-        window.location.href = `mailto:${msg.email}?subject=Réponse: ${msg.sujet}&body=${encodeURIComponent(responseText)}`;
-    };
-
-    modal.style.display = 'flex';
-}
-
-closeModalBtn.onclick = () => modal.style.display = 'none';
-window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
-
-// ===================================
-// MODAL DE CONFIRMATION
-// ===================================
-const confirmModal = document.getElementById('confirm-modal');
-const btnConfirmOk = document.getElementById('btn-confirm-ok');
-const btnConfirmCancel = document.getElementById('btn-confirm-cancel');
-
-let confirmCallback = null;
-
-function openConfirmModal(callback) {
-    confirmCallback = callback;
-    confirmModal.style.display = 'flex';
-}
-
-btnConfirmCancel.onclick = () => confirmModal.style.display = 'none';
-btnConfirmOk.onclick = () => {
-    confirmModal.style.display = 'none';
-    if (typeof confirmCallback === 'function') confirmCallback();
-};
-window.onclick = (e) => { if (e.target === confirmModal) confirmModal.style.display = 'none'; };
-
-// ===================================
-// CHARGER LES MESSAGES AU DEMARRAGE
-// ===================================
-if (window.location.pathname.includes('Messages.html')) {
-    loadMessages();
-}
-
-// Charger les messages dès que la page est prête
-window.addEventListener('DOMContentLoaded', () => {
-    loadMessages();
-});
-
-
-
+console.log(
+    '%c👋 Bienvenue sur mon portfolio !',
+    'color: #ff6b35; font-size: 20px; font-weight: bold;'
+);
+console.log(
+    '%cEnvironnement: ' + (window.API_CONFIG && window.API_CONFIG.IS_PRODUCTION ? 'PRODUCTION 🚀' : 'DÉVELOPPEMENT 🔧'),
+    'color: #ff8c5a; font-size: 14px;'
+);

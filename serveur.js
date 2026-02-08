@@ -14,13 +14,17 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Servir les fichiers HTML / CSS / JS
-app.use(express.static(path.join(__dirname)));
+// =======================
+// SERVIR LES FICHIERS STATIQUES
+// =======================
+// CORRECTION : Servir les fichiers depuis la racine (__dirname)
+// au lieu de __dirname/SK Digitale
+app.use(express.static(__dirname));
 
 // =======================
 // CONNEXION MONGODB
 // =======================
-/*if (!process.env.MONGO_URI) {
+if (!process.env.MONGO_URI) {
     console.error('❌ MONGO_URI manquant dans .env');
     process.exit(1);
 }
@@ -43,7 +47,7 @@ const messageSchema = new mongoose.Schema({
     lu: { type: Boolean, default: false }
 }, { timestamps: true });
 
-const Message = mongoose.model('Message', messageSchema);*/
+const Message = mongoose.model('Message', messageSchema);
 
 // =======================
 // FICHIER POUR STOCKER LE MOT DE PASSE
@@ -65,7 +69,7 @@ function setAdminPassword(newPassword) {
 // ROUTES PAGES HTML
 // =======================
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'SK Digitale', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.get('/messages', (req, res) => {
@@ -225,9 +229,6 @@ app.post('/api/messages/:id/reply', async (req, res) => {
                 pass: process.env.GMAIL_PASS
             }
         });
-app.get('/api/messages', (req, res) => {
-    res.json([]);
-});
 
         // Préparer l'email
         const mailOptions = {
@@ -298,5 +299,7 @@ app.listen(PORT, () => {
     console.log('═══════════════════════════════════════');
     console.log(`👤 Admin : ${ADMIN_USERNAME}`);
     console.log(`📧 Email : ${process.env.GMAIL_USER || 'Non configuré'}`);
+    console.log('═══════════════════════════════════════');
+    console.log('📁 Fichiers servis depuis la racine');
     console.log('═══════════════════════════════════════');
 });

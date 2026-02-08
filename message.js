@@ -1,85 +1,76 @@
 // ===================================
-// CONFIGURATION API
+// UTILISER LA CONFIGURATION
 // ===================================
-// ✅ universel (local + Railway)
-const API_URL = `${window.location.origin}/api`;
-
+const API_URL = window.API_CONFIG ? window.API_CONFIG.API_URL : 'http://localhost:3000/api';
 
 // ===================================
 // CANVAS BACKGROUND
 // ===================================
 const canvas = document.getElementById('creative-bg');
-const ctx = canvas.getContext('2d');
+if (canvas) {
+    const ctx = canvas.getContext('2d');
 
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
-// Particules
-const particles = [];
-const particleCount = window.innerWidth < 768 ? 50 : 100;
-
-class Particle {
-    constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.vx = (Math.random() - 0.5) * 0.8;
-        this.vy = (Math.random() - 0.5) * 0.8;
-        this.radius = Math.random() * 2 + 1;
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
     }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
+    const particles = [];
+    const particleCount = window.innerWidth < 768 ? 50 : 100;
 
-        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-    }
-
-    draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(14, 165, 233, 0.6)';
-        ctx.fill();
-    }
-}
-
-for (let i = 0; i < particleCount; i++) {
-    particles.push(new Particle());
-}
-
-function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    particles.forEach(particle => {
-        particle.update();
-        particle.draw();
-    });
-
-    for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-            const dx = particles[i].x - particles[j].x;
-            const dy = particles[i].y - particles[j].y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < 120) {
-                ctx.beginPath();
-                ctx.strokeStyle = `rgba(14, 165, 233, ${1 - distance / 120})`;
-                ctx.lineWidth = 0.5;
-                ctx.moveTo(particles[i].x, particles[i].y);
-                ctx.lineTo(particles[j].x, particles[j].y);
-                ctx.stroke();
-            }
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.vx = (Math.random() - 0.5) * 0.8;
+            this.vy = (Math.random() - 0.5) * 0.8;
+            this.radius = Math.random() * 2 + 1;
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+        }
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,107,53,0.6)';
+            ctx.fill();
         }
     }
 
-    requestAnimationFrame(animate);
-}
+    for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+    }
 
-animate();
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            p.update();
+            p.draw();
+        });
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 120) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(255,107,53,${1 - dist / 120})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animate);
+    }
+    animate();
+}
 
 // ===================================
 // VARIABLES GLOBALES
@@ -142,45 +133,60 @@ function showNotification(message, type = 'info') {
 // ===================================
 // MENU LATÉRAL
 // ===================================
-btnMenu.addEventListener('click', () => {
-    sideMenu.classList.add('active');
-    menuOverlay.classList.add('active');
-});
+if (btnMenu && sideMenu && closeMenu && menuOverlay) {
+    btnMenu.addEventListener('click', () => {
+        sideMenu.classList.add('active');
+        menuOverlay.classList.add('active');
+    });
 
-closeMenu.addEventListener('click', () => {
-    sideMenu.classList.remove('active');
-    menuOverlay.classList.remove('active');
-});
+    closeMenu.addEventListener('click', () => {
+        sideMenu.classList.remove('active');
+        menuOverlay.classList.remove('active');
+    });
 
-menuOverlay.addEventListener('click', () => {
-    sideMenu.classList.remove('active');
-    menuOverlay.classList.remove('active');
-});
+    menuOverlay.addEventListener('click', () => {
+        sideMenu.classList.remove('active');
+        menuOverlay.classList.remove('active');
+    });
 
-// Menu items
-document.getElementById('menu-dashboard').addEventListener('click', () => {
-    sideMenu.classList.remove('active');
-    menuOverlay.classList.remove('active');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-});
+    // Menu items
+    const menuDashboard = document.getElementById('menu-dashboard');
+    const menuAllData = document.getElementById('menu-all-data');
+    const menuSettings = document.getElementById('menu-settings');
+    const menuExport = document.getElementById('menu-export');
 
-document.getElementById('menu-all-data').addEventListener('click', () => {
-    sideMenu.classList.remove('active');
-    menuOverlay.classList.remove('active');
-    showAllDataModal();
-});
+    if (menuDashboard) {
+        menuDashboard.addEventListener('click', () => {
+            sideMenu.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
 
-document.getElementById('menu-settings').addEventListener('click', () => {
-    sideMenu.classList.remove('active');
-    menuOverlay.classList.remove('active');
-    document.getElementById('settings-modal').style.display = 'flex';
-});
+    if (menuAllData) {
+        menuAllData.addEventListener('click', () => {
+            sideMenu.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            showAllDataModal();
+        });
+    }
 
-document.getElementById('menu-export').addEventListener('click', () => {
-    sideMenu.classList.remove('active');
-    menuOverlay.classList.remove('active');
-    exportData();
-});
+    if (menuSettings) {
+        menuSettings.addEventListener('click', () => {
+            sideMenu.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            document.getElementById('settings-modal').style.display = 'flex';
+        });
+    }
+
+    if (menuExport) {
+        menuExport.addEventListener('click', () => {
+            sideMenu.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            exportData();
+        });
+    }
+}
 
 // ===================================
 // CHARGEMENT MESSAGES
@@ -230,8 +236,7 @@ function displayMessages(messages) {
                     <span class="message-date">${new Date(m.createdAt).toLocaleString('fr-FR')}</span>
                 </div>
                 <p class="message-subject">${m.sujet}</p>
-               <p class="message-preview">${m.message.substring(0,120)}...</p>
-
+                <p class="message-preview">${m.message.substring(0, 120)}...</p>
                 <div class="message-footer">
                     <span class="message-email">
                         <i class="fas fa-envelope"></i>
@@ -291,11 +296,9 @@ if (btnToggleRead) {
 
             if (!res.ok) throw new Error('Erreur');
 
-            const data = await res.json();
             currentMessage.lu = !currentMessage.lu;
             readStatusText.textContent = currentMessage.lu ? 'Marquer comme non lu' : 'Marquer comme lu';
 
-            // Recharger les messages
             await loadMessages();
             showNotification('Statut mis à jour', 'success');
         } catch (err) {
@@ -359,7 +362,6 @@ if (btnSendResponse) {
             return;
         }
 
-        // Désactiver le bouton pendant l'envoi
         btnSendResponse.disabled = true;
         btnSendResponse.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
 
@@ -382,7 +384,6 @@ if (btnSendResponse) {
             console.error(err);
             showNotification('Erreur lors de l\'envoi de la réponse', 'error');
         } finally {
-            // Réactiver le bouton
             btnSendResponse.disabled = false;
             btnSendResponse.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer la réponse';
         }
@@ -408,27 +409,29 @@ if (searchInput) {
 // ===================================
 // FILTRES
 // ===================================
-filterButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        filterButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentFilter = btn.dataset.filter;
+if (filterButtons) {
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.filter;
 
-        const query = searchInput.value.toLowerCase();
-        let filtered = messagesData;
+            const query = searchInput ? searchInput.value.toLowerCase() : '';
+            let filtered = messagesData;
 
-        if (query) {
-            filtered = filtered.filter(m =>
-                m.nom.toLowerCase().includes(query) ||
-                m.email.toLowerCase().includes(query) ||
-                m.sujet.toLowerCase().includes(query) ||
-                m.message.toLowerCase().includes(query)
-            );
-        }
+            if (query) {
+                filtered = filtered.filter(m =>
+                    m.nom.toLowerCase().includes(query) ||
+                    m.email.toLowerCase().includes(query) ||
+                    m.sujet.toLowerCase().includes(query) ||
+                    m.message.toLowerCase().includes(query)
+                );
+            }
 
-        displayMessages(applyFilter(filtered));
+            displayMessages(applyFilter(filtered));
+        });
     });
-});
+}
 
 function applyFilter(messages) {
     if (currentFilter === 'read') {
@@ -445,13 +448,14 @@ function applyFilter(messages) {
 if (btnRefresh) {
     btnRefresh.addEventListener('click', async () => {
         btnRefresh.disabled = true;
-        btnRefresh.querySelector('i').style.animation = 'spin 1s linear infinite';
+        const icon = btnRefresh.querySelector('i');
+        if (icon) icon.style.animation = 'spin 1s linear infinite';
 
         await loadMessages();
 
         setTimeout(() => {
             btnRefresh.disabled = false;
-            btnRefresh.querySelector('i').style.animation = '';
+            if (icon) icon.style.animation = '';
         }, 1000);
 
         showNotification('Messages actualisés', 'success');
@@ -478,10 +482,10 @@ async function updateStats() {
         if (!res.ok) throw new Error('Erreur stats');
 
         const stats = await res.json();
-        statTotal.textContent = stats.total;
-        statUnread.textContent = stats.unread;
-        statRead.textContent = stats.read;
-        statToday.textContent = stats.today;
+        if (statTotal) statTotal.textContent = stats.total;
+        if (statUnread) statUnread.textContent = stats.unread;
+        if (statRead) statRead.textContent = stats.read;
+        if (statToday) statToday.textContent = stats.today;
     } catch (err) {
         console.error(err);
     }
@@ -493,6 +497,8 @@ async function updateStats() {
 function showAllDataModal() {
     const modal = document.getElementById('all-data-modal');
     const container = document.getElementById('data-table-container');
+
+    if (!modal || !container) return;
 
     modal.style.display = 'flex';
     container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>Chargement des données...</p></div>';
@@ -538,55 +544,66 @@ function showAllDataModal() {
     }, 500);
 }
 
-document.getElementById('close-all-data').addEventListener('click', () => {
-    document.getElementById('all-data-modal').style.display = 'none';
-});
+const closeAllData = document.getElementById('close-all-data');
+if (closeAllData) {
+    closeAllData.addEventListener('click', () => {
+        const modal = document.getElementById('all-data-modal');
+        if (modal) modal.style.display = 'none';
+    });
+}
 
 // ===================================
 // CHANGER MOT DE PASSE
 // ===================================
-document.getElementById('close-settings').addEventListener('click', () => {
-    document.getElementById('settings-modal').style.display = 'none';
-});
+const closeSettings = document.getElementById('close-settings');
+if (closeSettings) {
+    closeSettings.addEventListener('click', () => {
+        const modal = document.getElementById('settings-modal');
+        if (modal) modal.style.display = 'none';
+    });
+}
 
-document.getElementById('change-password-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+const changePasswordForm = document.getElementById('change-password-form');
+if (changePasswordForm) {
+    changePasswordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    const currentPassword = document.getElementById('current-password').value;
-    const newPassword = document.getElementById('new-password').value;
-    const confirmPassword = document.getElementById('confirm-password').value;
+        const currentPassword = document.getElementById('current-password').value;
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
 
-    if (newPassword !== confirmPassword) {
-        showNotification('Les mots de passe ne correspondent pas', 'error');
-        return;
-    }
-
-    if (newPassword.length < 4) {
-        showNotification('Le mot de passe doit contenir au moins 4 caractères', 'error');
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/admin/change-password`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ currentPassword, newPassword })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            showNotification('Mot de passe modifié avec succès', 'success');
-            document.getElementById('settings-modal').style.display = 'none';
-            document.getElementById('change-password-form').reset();
-        } else {
-            showNotification(data.error || 'Erreur lors du changement', 'error');
+        if (newPassword !== confirmPassword) {
+            showNotification('Les mots de passe ne correspondent pas', 'error');
+            return;
         }
-    } catch (err) {
-        console.error(err);
-        showNotification('Erreur de connexion au serveur', 'error');
-    }
-});
+
+        if (newPassword.length < 4) {
+            showNotification('Le mot de passe doit contenir au moins 4 caractères', 'error');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/admin/change-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPassword, newPassword })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                showNotification('Mot de passe modifié avec succès', 'success');
+                document.getElementById('settings-modal').style.display = 'none';
+                changePasswordForm.reset();
+            } else {
+                showNotification(data.error || 'Erreur lors du changement', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showNotification('Erreur de connexion au serveur', 'error');
+        }
+    });
+}
 
 // ===================================
 // EXPORTER LES DONNÉES
@@ -622,5 +639,6 @@ function exportData() {
 // INIT
 // ===================================
 window.addEventListener('DOMContentLoaded', () => {
+    console.log('Messages.js chargé - Environnement:', window.API_CONFIG ? (window.API_CONFIG.IS_PRODUCTION ? 'PRODUCTION' : 'DÉVELOPPEMENT') : 'NON CONFIGURÉ');
     loadMessages();
 });
