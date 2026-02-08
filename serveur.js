@@ -15,12 +15,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Servir les fichiers HTML / CSS / JS
-app.use(express.static(path.join(__dirname, 'SK Digitale')));
+app.use(express.static(path.join(__dirname)));
 
 // =======================
 // CONNEXION MONGODB
 // =======================
-if (!process.env.MONGO_URI) {
+/*if (!process.env.MONGO_URI) {
     console.error('❌ MONGO_URI manquant dans .env');
     process.exit(1);
 }
@@ -43,7 +43,7 @@ const messageSchema = new mongoose.Schema({
     lu: { type: Boolean, default: false }
 }, { timestamps: true });
 
-const Message = mongoose.model('Message', messageSchema);
+const Message = mongoose.model('Message', messageSchema);*/
 
 // =======================
 // FICHIER POUR STOCKER LE MOT DE PASSE
@@ -69,11 +69,11 @@ app.get('/', (req, res) => {
 });
 
 app.get('/messages', (req, res) => {
-    res.sendFile(path.join(__dirname, 'SK Digitale', 'Messages.html'));
+    res.sendFile(path.join(__dirname, 'Messages.html'));
 });
 
 app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'SK Digitale', 'Admin.html'));
+    res.sendFile(path.join(__dirname, 'Admin.html'));
 });
 
 // =======================
@@ -225,6 +225,9 @@ app.post('/api/messages/:id/reply', async (req, res) => {
                 pass: process.env.GMAIL_PASS
             }
         });
+app.get('/api/messages', (req, res) => {
+    res.json([]);
+});
 
         // Préparer l'email
         const mailOptions = {
