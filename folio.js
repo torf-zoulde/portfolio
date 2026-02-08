@@ -1,4 +1,11 @@
 // ===================================
+// CONFIGURATION API
+// ===================================
+// IMPORTANT: Changez cette URL selon votre environnement
+const API_URL = 'http://localhost:3000/api';
+// En production, remplacez par: const API_URL = 'https://votre-domaine.com/api';
+
+// ===================================
 // CANVAS BACKGROUND ANIMATION
 // ===================================
 const canvas = document.getElementById('creative-bg');
@@ -15,7 +22,6 @@ window.addEventListener('resize', resizeCanvas);
 
 // Particules
 const particles = [];
-// Réduire le nombre de particules sur mobile pour de meilleures performances
 const particleCount = window.innerWidth < 768 ? 50 : 100;
 
 class Particle {
@@ -31,7 +37,6 @@ class Particle {
         this.x += this.vx;
         this.y += this.vy;
 
-        // Rebond sur les bords
         if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
         if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
     }
@@ -44,22 +49,18 @@ class Particle {
     }
 }
 
-// Créer les particules
 for (let i = 0; i < particleCount; i++) {
     particles.push(new Particle());
 }
 
-// Animation
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Dessiner et mettre à jour les particules
     particles.forEach(particle => {
         particle.update();
         particle.draw();
     });
 
-    // Dessiner les connexions
     for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
             const dx = particles[i].x - particles[j].x;
@@ -68,7 +69,7 @@ function animate() {
 
             if (distance < 120) {
                 ctx.beginPath();
-                ctx.strokeStyle =  `rgba(14, 165, 233 , ${1 - distance / 120})`;
+                ctx.strokeStyle = `rgba(14, 165, 233, ${1 - distance / 120})`;
                 ctx.lineWidth = 0.5;
                 ctx.moveTo(particles[i].x, particles[i].y);
                 ctx.lineTo(particles[j].x, particles[j].y);
@@ -88,27 +89,27 @@ animate();
 const menuBtn = document.getElementById('menuBtn');
 const menu = document.getElementById('menu');
 
-menuBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    menu.classList.toggle('active');
-    menuBtn.classList.toggle('active');
-});
-
-// Fermer le menu si on clique ailleurs
-document.addEventListener('click', (e) => {
-    if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
-        menu.classList.remove('active');
-        menuBtn.classList.remove('active');
-    }
-});
-
-// Fermer le menu au clic sur un lien
-document.querySelectorAll('.menu-link').forEach(link => {
-    link.addEventListener('click', () => {
-        menu.classList.remove('active');
-        menuBtn.classList.remove('active');
+if (menuBtn && menu) {
+    menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menu.classList.toggle('active');
+        menuBtn.classList.toggle('active');
     });
-});
+
+    document.addEventListener('click', (e) => {
+        if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
+            menu.classList.remove('active');
+            menuBtn.classList.remove('active');
+        }
+    });
+
+    document.querySelectorAll('.menu-link').forEach(link => {
+        link.addEventListener('click', () => {
+            menu.classList.remove('active');
+            menuBtn.classList.remove('active');
+        });
+    });
+}
 
 // ===================================
 // BOUTON VOIR PLUS - PARCOURS SCOLAIRE
@@ -123,7 +124,6 @@ if (btnVoirParcours && parcoursComplet) {
             btnVoirParcours.innerHTML = '<i class="fas fa-chevron-up"></i> Voir moins';
             btnVoirParcours.classList.add('active');
             
-            // Scroll fluide vers la timeline
             setTimeout(() => {
                 parcoursComplet.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }, 100);
@@ -152,7 +152,6 @@ const observer = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-// Observer tous les éléments avec animation
 document.querySelectorAll('.timeline-item, .experience-card, .skill-category, .soft-skill-card, .project-card').forEach(el => {
     el.style.opacity = '0';
     el.style.transform = 'translateY(50px)';
@@ -181,69 +180,147 @@ const skillObserver = new IntersectionObserver((entries) => {
 skillBars.forEach(bar => skillObserver.observe(bar));
 
 // ===================================
-// FORMULAIRE CONTACT
+// FORMULAIRE CONTACT - CORRIGÉ
 // ===================================
 const btnContact = document.getElementById('btn-contact');
 const formContact = document.getElementById('form-contact');
 
-btnContact.addEventListener('click', () => {
-    formContact.classList.toggle('active');
-    
-    if (formContact.classList.contains('active')) {
-        btnContact.innerHTML = '<i class="fas fa-times"></i> Fermer le formulaire';
-    } else {
-        btnContact.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer un message';
-    }
-});
+if (btnContact && formContact) {
+    // Afficher/masquer le formulaire
+    btnContact.addEventListener('click', () => {
+        formContact.classList.toggle('active');
+        
+        if (formContact.classList.contains('active')) {
+            btnContact.innerHTML = '<i class="fas fa-times"></i> Fermer le formulaire';
+        } else {
+            btnContact.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer un message';
+        }
+    });
 
-// Soumettre le formulaire
-formContact.addEventListener('submit', (e) => {
-    e.preventDefault();
+    // Soumettre le formulaire avec envoi vers l'API
+    formContact.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const nom = document.getElementById('nom').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const sujet = document.getElementById('sujet').value.trim();
+        const message = document.getElementById('message').value.trim();
+        
+        // Validation
+        if (!nom || !email || !sujet || !message) {
+            showNotification('Veuillez remplir tous les champs', 'error');
+            return;
+        }
+        
+        // Désactiver le bouton pendant l'envoi
+        const submitBtn = formContact.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+        
+        try {
+            // Envoyer les données à l'API
+            const response = await fetch(`${API_URL}/messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    nom,
+                    email,
+                    sujet,
+                    message
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Succès
+                showNotification('Message envoyé avec succès ! 🎉', 'success');
+                
+                // Réinitialiser le formulaire
+                formContact.reset();
+                formContact.classList.remove('active');
+                btnContact.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer un message';
+            } else {
+                // Erreur serveur
+                showNotification(data.error || 'Erreur lors de l\'envoi du message', 'error');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showNotification('Impossible de contacter le serveur. Vérifiez votre connexion.', 'error');
+        } finally {
+            // Réactiver le bouton
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }
+    });
+}
+
+// ===================================
+// FONCTION DE NOTIFICATION
+// ===================================
+function showNotification(message, type = 'info') {
+    // Supprimer les notifications existantes
+    const existingNotif = document.querySelector('.notification');
+    if (existingNotif) {
+        existingNotif.remove();
+    }
     
-    const nom = document.getElementById('nom').value;
-    const email = document.getElementById('email').value;
-    const sujet = document.getElementById('sujet').value;
-    const message = document.getElementById('message').value;
+    // Créer la notification
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
     
-    // Créer le sujet et le corps de l'email
-    const emailSubject = encodeURIComponent(sujet);
-    const emailBody = encodeURIComponent(
-        `Nom: ${nom}\n` +
-        `Email: ${email}\n\n` +
-        `Message:\n${message}`
-    );
+    const icon = type === 'success' ? 'fa-check-circle' : 
+                 type === 'error' ? 'fa-exclamation-circle' : 
+                 'fa-info-circle';
     
-    // Ouvrir le client email
-    window.location.href = `mailto:rogardossou@email.com?subject=${emailSubject}&body=${emailBody}`;
+    notification.innerHTML = `
+        <i class="fas ${icon}"></i>
+        <span>${message}</span>
+    `;
+    Admin
+    // Ajouter au DOM
+    document.body.appendChild(notification);
     
-    // Afficher un message de confirmation
-    alert('Merci pour votre message ! Votre client email va s\'ouvrir.');
+    // Animation d'entrée
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+        notification.style.opacity = '1';
+    }, 10);
     
-    // Réinitialiser le formulaire
-    formContact.reset();
-    formContact.classList.remove('active');
-    btnContact.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer un message';
-});
+    // Supprimer après 5 secondes
+    setTimeout(() => {
+        notification.style.transform = 'translateX(400px)';
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 5000);
+}
 
 // ===================================
 // SCROLL TO TOP BUTTON
 // ===================================
 const scrollTopBtn = document.getElementById('scroll-top');
 
-window.addEventListener('scroll', () => {
-    if (window.pageYOffset > 300) {
-        scrollTopBtn.classList.add('visible');
-    } else {
-        scrollTopBtn.classList.remove('visible');
-    }
-});
-
-scrollTopBtn.addEventListener('click', () => {
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
+if (scrollTopBtn) {
+    window.addEventListener('scroll', () => {
+        if (window.pageYOffset > 300) {
+            scrollTopBtn.classList.add('visible');
+        } else {
+            scrollTopBtn.classList.remove('visible');
+        }
     });
-});
+
+    scrollTopBtn.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+}
 
 // ===================================
 // SMOOTH SCROLL POUR LES LIENS D'ANCRE
@@ -272,17 +349,19 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 const header = document.getElementById('header');
 let lastScroll = 0;
 
-window.addEventListener('scroll', () => {
-    const currentScroll = window.pageYOffset;
-    
-    if (currentScroll > 100) {
-        header.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.5)';
-    } else {
-        header.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.4)';
-    }
-    
-    lastScroll = currentScroll;
-});
+if (header) {
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        
+        if (currentScroll > 100) {
+            header.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.5)';
+        } else {
+            header.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.4)';
+        }
+        
+        lastScroll = currentScroll;
+    });
+}
 
 // ===================================
 // INTERACTION PHOTO HERO
@@ -300,62 +379,11 @@ if (photoFrame) {
 }
 
 // ===================================
-// ANIMATION COMPTEUR (pour les stats)
-// ===================================
-function animateCounter(element, target, duration = 2000) {
-    let start = 0;
-    const increment = target / (duration / 16);
-    
-    const timer = setInterval(() => {
-        start += increment;
-        if (start >= target) {
-            element.textContent = target;
-            clearInterval(timer);
-        } else {
-            element.textContent = Math.floor(start);
-        }
-    }, 16);
-}
-
-// ===================================
-// EFFET DE TYPING POUR LE TITRE
-// ===================================
-function typeWriter(element, text, speed = 100) {
-    let i = 0;
-    element.textContent = '';
-    
-    function type() {
-        if (i < text.length) {
-            element.textContent += text.charAt(i);
-            i++;
-            setTimeout(type, speed);
-        }
-    }
-    
-    type();
-}
-
-// ===================================
-// EFFET PARALLAX SIMPLE
-// ===================================
-window.addEventListener('scroll', () => {
-    const scrolled = window.pageYOffset;
-    const parallaxElements = document.querySelectorAll('.parallax');
-    
-    parallaxElements.forEach(element => {
-        const speed = element.dataset.speed || 0.5;
-        element.style.transform = `translateY(${scrolled * speed}px)`;
-    });
-});
-
-// ===================================
 // ANIMATION AU CHARGEMENT
 // ===================================
 window.addEventListener('load', () => {
-    // Ajouter classe loaded pour déclencher les animations
     document.body.classList.add('loaded');
     
-    // Animation de la photo après un délai
     setTimeout(() => {
         if (photoFrame) {
             photoFrame.style.opacity = '1';
@@ -365,56 +393,11 @@ window.addEventListener('load', () => {
 });
 
 // ===================================
-// GESTION DES TOOLTIPS
-// ===================================
-document.querySelectorAll('[data-tooltip]').forEach(element => {
-    element.addEventListener('mouseenter', (e) => {
-        const tooltip = document.createElement('div');
-        tooltip.className = 'tooltip';
-        tooltip.textContent = e.target.dataset.tooltip;
-        document.body.appendChild(tooltip);
-        
-        const rect = e.target.getBoundingClientRect();
-        tooltip.style.top = `${rect.top - tooltip.offsetHeight - 10}px`;
-        tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`;
-    });
-    
-    element.addEventListener('mouseleave', () => {
-        const tooltip = document.querySelector('.tooltip');
-        if (tooltip) tooltip.remove();
-    });
-});
-
-// ===================================
-// CURSEUR PERSONNALISÉ (optionnel)
-// ===================================
-const cursor = document.createElement('div');
-cursor.className = 'custom-cursor';
-document.body.appendChild(cursor);
-
-document.addEventListener('mousemove', (e) => {
-    cursor.style.left = `${e.clientX}px`;
-    cursor.style.top = `${e.clientY}px`;
-});
-
-// Effet sur les liens et boutons
-document.querySelectorAll('a, button').forEach(element => {
-    element.addEventListener('mouseenter', () => {
-        cursor.classList.add('hover');
-    });
-    
-    element.addEventListener('mouseleave', () => {
-        cursor.classList.remove('hover');
-    });
-});
-
-// ===================================
 // DÉTECTION MOBILE
 // ===================================
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 if (isMobile) {
-    // Désactiver certaines animations sur mobile pour les performances
     document.body.classList.add('mobile');
 }
 
@@ -430,51 +413,6 @@ document.querySelectorAll('img').forEach(img => {
         this.parentNode.appendChild(placeholder);
     });
 });
-
-// ===================================
-// EASTER EGG - KONAMI CODE
-// ===================================
-const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
-let konamiPosition = 0;
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === konamiCode[konamiPosition]) {
-        konamiPosition++;
-        if (konamiPosition === konamiCode.length) {
-            activateEasterEgg();
-            konamiPosition = 0;
-        }
-    } else {
-        konamiPosition = 0;
-    }
-});
-
-function activateEasterEgg() {
-    // Effet visuel spécial
-    document.body.style.animation = 'rainbow 2s infinite';
-    
-    setTimeout(() => {
-        document.body.style.animation = '';
-        alert('🎉 Bravo ! Vous avez trouvé l\'easter egg ! 🎉');
-    }, 2000);
-}
-
-// ===================================
-// PRÉCHARGEMENT DES IMAGES
-// ===================================
-function preloadImages(urls) {
-    urls.forEach(url => {
-        const img = new Image();
-        img.src = url;
-    });
-}
-
-// Liste des images à précharger
-const imagesToPreload = [
-    'IMG-20250727-WA0016.jpg'
-];
-
-preloadImages(imagesToPreload);
 
 // ===================================
 // CONSOLE MESSAGE
@@ -504,17 +442,224 @@ if (window.performance) {
 }
 
 // ===================================
-// ANALYTICS (si nécessaire)
+// TEST DE CONNEXION API AU CHARGEMENT
 // ===================================
-function trackEvent(category, action, label) {
-    // Placeholder pour Google Analytics ou autre
-    console.log(`Event tracked: ${category} - ${action} - ${label}`);
+async function testAPIConnection() {
+    try {
+        const response = await fetch(`${API_URL}/messages/stats/summary`);
+        if (response.ok) {
+            console.log('✅ API connectée et fonctionnelle');
+        } else {
+            console.warn('⚠️ API accessible mais erreur de réponse');
+        }
+    } catch (error) {
+        console.warn('⚠️ Serveur API non accessible. Assurez-vous que server.js est démarré.');
+        console.warn('➡️ Pour démarrer le serveur: npm start');
+    }
 }
 
-// Tracker les clics sur les boutons importants
-document.querySelectorAll('.btn-download, .btn-view, .social-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const label = this.textContent.trim();
-        trackEvent('Button', 'Click', label);
+// Tester la connexion API au chargement (en mode développement)
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    testAPIConnection();
+}
+
+// LOGIN ADMIN
+const loginForm = document.getElementById('login-form');
+const errorMessage = document.getElementById('error-message');
+const errorText = document.getElementById('error-text');
+const loadingIndicator = document.getElementById('loading-indicator');
+
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorMessage.style.display = 'none';
+        loadingIndicator.style.display = 'flex';
+
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+
+        try {
+            const response = await fetch(`${API_URL}/admin/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+            loadingIndicator.style.display = 'none';
+
+            if (response.ok) {
+                // Redirection vers messages.html
+                window.location.href = data.redirect;
+            } else {
+                errorText.textContent = data.error || 'Erreur de connexion';
+                errorMessage.style.display = 'flex';
+            }
+        } catch (err) {
+            loadingIndicator.style.display = 'none';
+            errorText.textContent = 'Impossible de contacter le serveur';
+            errorMessage.style.display = 'flex';
+            console.error(err);
+        }
     });
+}
+
+
+
+
+
+
+// ===================================
+// CHARGEMENT DES MESSAGES AVEC MODAL
+// ===================================
+async function loadMessages() {
+    const container = document.getElementById('messages-container');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Chargement des messages...</p>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`${API_URL}/messages`);
+        if (!response.ok) throw new Error(`HTTP ${response.status} - ${response.statusText}`);
+        const messages = await response.json();
+
+        if (messages.length === 0) {
+            container.innerHTML = '<p>Aucun message reçu pour le moment.</p>';
+            return;
+        }
+
+        container.innerHTML = messages.map(msg => `
+            <div class="message-card ${msg.lu ? 'read' : 'unread'}" data-id="${msg._id}">
+                <div class="message-summary">
+                    <span class="message-nom">${msg.nom}</span>
+                    <span class="message-date">${new Date(msg.createdAt).toLocaleString()}</span>
+                    <button class="btn-view-message">
+                        <i class="fas fa-eye"></i> Voir
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        // Ajouter les événements pour ouvrir la modal
+        document.querySelectorAll('.btn-view-message').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const card = btn.closest('.message-card');
+                const id = card.dataset.id;
+                const messageData = messages.find(m => m._id === id);
+                openMessageModal(messageData);
+            });
+        });
+
+    } catch (err) {
+        console.error('Erreur de chargement des messages:', err);
+        container.innerHTML = `<p>Erreur de chargement des messages. ${err.message}</p>`;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+// ===================================
+// MODAL MESSAGE
+// ===================================
+const modal = document.getElementById('message-modal');
+const closeModalBtn = document.getElementById('close-modal');
+
+function openMessageModal(msg) {
+    if (!msg) return;
+    
+    document.getElementById('detail-nom').textContent = msg.nom;
+    document.getElementById('detail-email').textContent = msg.email;
+    document.getElementById('detail-sujet').textContent = msg.sujet;
+    document.getElementById('detail-date').textContent = new Date(msg.createdAt).toLocaleString();
+    document.getElementById('detail-message').textContent = msg.message;
+
+    // Bouton marquer lu/non lu
+    const readStatusText = document.getElementById('read-status-text');
+    const btnToggleRead = document.getElementById('btn-toggle-read');
+    readStatusText.textContent = msg.lu ? 'Marquer comme non lu' : 'Marquer comme lu';
+
+    btnToggleRead.onclick = async () => {
+        try {
+            await fetch(`${API_URL}/messages/${msg._id}/read`, { method: 'PATCH' });
+            modal.style.display = 'none';
+            loadMessages();
+        } catch (err) {
+            console.error(err);
+            alert('Impossible de mettre à jour le statut du message.');
+        }
+    };
+
+    // Bouton supprimer
+    const btnDelete = document.getElementById('btn-delete-message');
+    btnDelete.onclick = () => openConfirmModal(async () => {
+        try {
+            await fetch(`${API_URL}/messages/${msg._id}`, { method: 'DELETE' });
+            modal.style.display = 'none';
+            loadMessages();
+        } catch (err) {
+            console.error(err);
+            alert('Impossible de supprimer le message.');
+        }
+    });
+
+    // Bouton répondre
+    const btnSendResponse = document.getElementById('btn-send-response');
+    btnSendResponse.onclick = () => {
+        const responseText = document.getElementById('response-text').value.trim();
+        if (!responseText) return alert('Veuillez écrire une réponse.');
+        window.location.href = `mailto:${msg.email}?subject=Réponse: ${msg.sujet}&body=${encodeURIComponent(responseText)}`;
+    };
+
+    modal.style.display = 'flex';
+}
+
+closeModalBtn.onclick = () => modal.style.display = 'none';
+window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+
+// ===================================
+// MODAL DE CONFIRMATION
+// ===================================
+const confirmModal = document.getElementById('confirm-modal');
+const btnConfirmOk = document.getElementById('btn-confirm-ok');
+const btnConfirmCancel = document.getElementById('btn-confirm-cancel');
+
+let confirmCallback = null;
+
+function openConfirmModal(callback) {
+    confirmCallback = callback;
+    confirmModal.style.display = 'flex';
+}
+
+btnConfirmCancel.onclick = () => confirmModal.style.display = 'none';
+btnConfirmOk.onclick = () => {
+    confirmModal.style.display = 'none';
+    if (typeof confirmCallback === 'function') confirmCallback();
+};
+window.onclick = (e) => { if (e.target === confirmModal) confirmModal.style.display = 'none'; };
+
+// ===================================
+// CHARGER LES MESSAGES AU DEMARRAGE
+// ===================================
+if (window.location.pathname.includes('Messages.html')) {
+    loadMessages();
+}
+
+// Charger les messages dès que la page est prête
+window.addEventListener('DOMContentLoaded', () => {
+    loadMessages();
 });
+
+
+
