@@ -1,7 +1,7 @@
 // ===================================
 // UTILISER LA CONFIGURATION
 // ===================================
-const API_URL = window.API_CONFIG ? window.API_CONFIG.API_URL : 'http://localhost:3000/api';
+const API_URL = `${window.location.origin}/api`;
 
 // ===================================
 // CANVAS BACKGROUND ANIMATION
@@ -444,32 +444,42 @@ if (isMobile) {
 async function testAPIConnection() {
     try {
         const response = await fetch(`${API_URL}/messages/stats/summary`);
+
         if (response.ok) {
             console.log('✅ API connectée et fonctionnelle');
         } else {
-            console.warn('⚠️ API accessible mais erreur de réponse');
+            console.warn(`⚠️ API accessible mais réponse invalide (${response.status})`);
         }
+
     } catch (error) {
-        console.warn('⚠️ Serveur API non accessible.');
-        if (window.API_CONFIG && !window.API_CONFIG.IS_PRODUCTION) {
-            console.warn('➡️ Pour démarrer le serveur: node server.js');
-        }
+        console.warn('❌ Serveur API non accessible.');
+        console.warn('➡️ Vérifie que le backend est démarré ou que l’URL API est correcte');
     }
 }
 
-// Tester la connexion API en développement
-if (window.API_CONFIG && !window.API_CONFIG.IS_PRODUCTION) {
+// Tester la connexion API UNIQUEMENT en développement
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
     testAPIConnection();
 }
 
 // ===================================
 // CONSOLE MESSAGE
 // ===================================
+const ENV = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ? 'DÉVELOPPEMENT 🔧'
+    : 'PRODUCTION 🚀';
+
 console.log(
     '%c👋 Bienvenue sur mon portfolio !',
     'color: #ff6b35; font-size: 20px; font-weight: bold;'
 );
+
 console.log(
-    '%cEnvironnement: ' + (window.API_CONFIG && window.API_CONFIG.IS_PRODUCTION ? 'PRODUCTION 🚀' : 'DÉVELOPPEMENT 🔧'),
+    `%cEnvironnement: ${ENV}`,
     'color: #ff8c5a; font-size: 14px;'
+);
+
+console.log(
+    `%cAPI utilisée: ${API_URL}`,
+    'color: #38bdf8; font-size: 13px;'
 );

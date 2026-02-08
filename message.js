@@ -1,7 +1,7 @@
 // ===================================
 // UTILISER LA CONFIGURATION
 // ===================================
-const API_URL = window.API_CONFIG ? window.API_CONFIG.API_URL : 'http://localhost:3000/api';
+const API_URL = `${window.location.origin}/api`;
 
 // ===================================
 // CANVAS BACKGROUND
@@ -639,6 +639,7 @@ function exportData() {
 // INIT
 // ===================================
 window.addEventListener('DOMContentLoaded', () => {
-    console.log('Messages.js chargé - Environnement:', window.API_CONFIG ? (window.API_CONFIG.IS_PRODUCTION ? 'PRODUCTION' : 'DÉVELOPPEMENT') : 'NON CONFIGURÉ');
+    const env = location.hostname === 'localhost' ? 'DÉVELOPPEMENT' : 'PRODUCTION';
+    console.log('Messages.js chargé - Environnement:', env);
     loadMessages();
 });
