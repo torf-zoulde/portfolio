@@ -1,7 +1,9 @@
 // ===================================
 // CONFIGURATION API
 // ===================================
-const API_URL = 'http://localhost:3000/api';
+// ✅ universel (local + Railway)
+const API_URL = `${window.location.origin}/api`;
+
 
 // ===================================
 // CANVAS BACKGROUND
