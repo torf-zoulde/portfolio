@@ -4,9 +4,19 @@ const mongoose = require('mongoose');
 const path = require('path');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// =======================
+// CONFIGURATION CORS (CRITIQUE)
+// =======================
+app.use(cors({
+    origin: '*', // En production, remplacez par votre domaine spécifique
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // =======================
 // MIDDLEWARES
@@ -14,12 +24,16 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Logging des requêtes (utile pour debug)
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
+
 // =======================
 // SERVIR LES FICHIERS STATIQUES
 // =======================
-// CORRECTION : Servir les fichiers depuis la racine (__dirname)
-// au lieu de __dirname/SK Digitale
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname )));
 
 // =======================
 // CONNEXION MONGODB
@@ -29,7 +43,10 @@ if (!process.env.MONGO_URI) {
     process.exit(1);
 }
 
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
     .then(() => console.log('✅ MongoDB connecté'))
     .catch(err => {
         console.error('❌ Erreur MongoDB', err);
@@ -66,6 +83,17 @@ function setAdminPassword(newPassword) {
 }
 
 // =======================
+// ROUTE DE TEST (Health Check)
+// =======================
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        message: 'API fonctionnelle',
+        timestamp: new Date().toISOString()
+    });
+});
+
+// =======================
 // ROUTES PAGES HTML
 // =======================
 app.get('/', (req, res) => {
@@ -91,10 +119,16 @@ app.post('/api/messages', async (req, res) => {
             return res.status(400).json({ error: 'Champs manquants' });
         }
 
-        await new Message({ nom, email, sujet, message }).save();
-        res.status(201).json({ success: true });
+        const newMessage = await new Message({ nom, email, sujet, message }).save();
+        console.log('✅ Nouveau message enregistré:', newMessage._id);
+        
+        res.status(201).json({ 
+            success: true,
+            message: 'Message enregistré avec succès',
+            id: newMessage._id
+        });
     } catch (err) {
-        console.error(err);
+        console.error('❌ Erreur POST /api/messages:', err);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
@@ -104,7 +138,7 @@ app.get('/api/messages', async (req, res) => {
         const messages = await Message.find().sort({ createdAt: -1 });
         res.json(messages);
     } catch (err) {
-        console.error(err);
+        console.error('❌ Erreur GET /api/messages:', err);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
@@ -121,7 +155,7 @@ app.get('/api/messages/stats/summary', async (req, res) => {
 
         res.json({ total, read, unread, today });
     } catch (err) {
-        console.error(err);
+        console.error('❌ Erreur GET /api/messages/stats/summary:', err);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
@@ -135,19 +169,23 @@ app.patch('/api/messages/:id/read', async (req, res) => {
         msg.lu = isRead !== undefined ? isRead : !msg.lu;
         await msg.save();
 
+        console.log(`✅ Message ${req.params.id} marqué comme ${msg.lu ? 'lu' : 'non lu'}`);
         res.json({ success: true, isRead: msg.lu });
     } catch (err) {
-        console.error(err);
+        console.error('❌ Erreur PATCH /api/messages/:id/read:', err);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
 
 app.delete('/api/messages/:id', async (req, res) => {
     try {
-        await Message.findByIdAndDelete(req.params.id);
+        const deleted = await Message.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ error: 'Message introuvable' });
+        
+        console.log(`✅ Message ${req.params.id} supprimé`);
         res.json({ success: true });
     } catch (err) {
-        console.error(err);
+        console.error('❌ Erreur DELETE /api/messages/:id:', err);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
@@ -167,8 +205,10 @@ app.post('/api/admin/login', (req, res) => {
     const adminPassword = getAdminPassword();
 
     if (username === ADMIN_USERNAME && password === adminPassword) {
+        console.log('✅ Connexion admin réussie');
         return res.json({ success: true, redirect: '/messages' });
     } else {
+        console.log('❌ Tentative de connexion échouée');
         return res.status(401).json({ error: 'Identifiant ou mot de passe incorrect' });
     }
 });
@@ -195,9 +235,10 @@ app.post('/api/admin/change-password', (req, res) => {
 
     try {
         setAdminPassword(newPassword);
+        console.log('✅ Mot de passe modifié avec succès');
         res.json({ success: true, message: 'Mot de passe modifié avec succès' });
     } catch (err) {
-        console.error(err);
+        console.error('❌ Erreur lors de la modification du mot de passe:', err);
         res.status(500).json({ error: 'Erreur lors de la modification' });
     }
 });
@@ -216,6 +257,7 @@ app.post('/api/messages/:id/reply', async (req, res) => {
 
         // Vérifier que les credentials Gmail sont configurés
         if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
+            console.error('❌ Configuration Gmail manquante');
             return res.status(500).json({ 
                 error: 'Configuration email manquante. Veuillez configurer GMAIL_USER et GMAIL_PASS dans .env' 
             });
@@ -273,12 +315,13 @@ app.post('/api/messages/:id/reply', async (req, res) => {
         message.lu = true;
         await message.save();
 
+        console.log(`✅ Email envoyé à ${message.email}`);
         res.json({ 
             success: true, 
             message: 'Réponse envoyée avec succès à ' + message.email 
         });
     } catch (err) {
-        console.error('Erreur envoi email:', err);
+        console.error('❌ Erreur envoi email:', err);
         res.status(500).json({ 
             error: 'Erreur lors de l\'envoi de l\'email. Vérifiez votre configuration Gmail.',
             details: err.message 
@@ -287,19 +330,42 @@ app.post('/api/messages/:id/reply', async (req, res) => {
 });
 
 // =======================
+// ROUTE 404 (doit être en dernier)
+// =======================
+app.use((req, res) => {
+    res.status(404).json({ 
+        error: 'Route non trouvée',
+        path: req.url
+    });
+});
+
+// =======================
+// GESTION DES ERREURS
+// =======================
+app.use((err, req, res, next) => {
+    console.error('❌ Erreur serveur:', err);
+    res.status(500).json({ 
+        error: 'Erreur interne du serveur',
+        message: err.message 
+    });
+});
+
+// =======================
 // LANCEMENT SERVEUR
 // =======================
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log('═══════════════════════════════════════');
     console.log('🚀 Serveur SK Digitale démarré');
     console.log('═══════════════════════════════════════');
-    console.log(`➡️  Site web : http://localhost:${PORT}`);
+    console.log(`➡️  Port : ${PORT}`);
+    console.log(`🌐 Local : http://localhost:${PORT}`);
     console.log(`📧 Messages : http://localhost:${PORT}/messages`);
     console.log(`🔐 Admin : http://localhost:${PORT}/admin`);
     console.log('═══════════════════════════════════════');
     console.log(`👤 Admin : ${ADMIN_USERNAME}`);
     console.log(`📧 Email : ${process.env.GMAIL_USER || 'Non configuré'}`);
+    console.log(`🗄️  MongoDB : ${process.env.MONGO_URI ? 'Configuré' : 'Non configuré'}`);
     console.log('═══════════════════════════════════════');
-    console.log('📁 Fichiers servis depuis la racine');
+    console.log('📁 Fichiers servis depuis: ./public');
     console.log('═══════════════════════════════════════');
 });
