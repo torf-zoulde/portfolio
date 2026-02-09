@@ -19,8 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 // =======================
 // CORRECTION : Servir les fichiers depuis la racine (__dirname)
 // au lieu de __dirname/SK Digitale
-/* app.use(express.static(__dirname));*/
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(__dirname));
 
 // =======================
 // CONNEXION MONGODB
@@ -286,18 +285,6 @@ app.post('/api/messages/:id/reply', async (req, res) => {
         });
     }
 });
-// =======================
-// Fallback FRONT (IMPORTANT)
-// =======================
-app.get('*', (req, res) => {
-    // ⚠️ Empêcher /api de renvoyer le front
-    if (req.path.startsWith('/api')) {
-        return res.status(404).json({ error: 'API route introuvable' });
-    }
-
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
 
 // =======================
 // LANCEMENT SERVEUR
