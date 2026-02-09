@@ -1,7 +1,8 @@
 // ===================================
 // UTILISER LA CONFIGURATION
 // ===================================
-const API_URL = `portfolio-production-7786.up.railway.app/api`;
+const API_URL = `https://portfolio-production-7786.up.railway.app/api`;
+
 
 // ===================================
 // CANVAS BACKGROUND

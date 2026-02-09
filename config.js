@@ -22,11 +22,12 @@ function getAPIUrl() {
     // Production
     // L'API sera sur le même domaine que le site
     if (port) {
-        return `${protocol}//${hostname}:${port}/api`;
+        return `https://portfolio-production-7786.up.railway.app/api`;
+
     }
     
-    return `${protocol}//${hostname}/api`;
-}
+    return `https://portfolio-production-7786.up.railway.app/api`;
+
 
 // Export de la configuration
 const API_URL = getAPIUrl();
