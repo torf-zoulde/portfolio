@@ -1,8 +1,9 @@
 // ===================================
 // UTILISER LA CONFIGURATION
 // ===================================
-const API_URL =`https://portfolio-production-7786.up.railway.app/api`;
-
+const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000/api'
+    : 'https://portfolio-production-a296.up.railway.app/api';
 
 // ===================================
 // CANVAS BACKGROUND ANIMATION

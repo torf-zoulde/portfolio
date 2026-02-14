@@ -1,9 +1,9 @@
 // ===================================
 // UTILISER LA CONFIGURATION
 // ===================================
-const API_URL = `https://portfolio-production-7786.up.railway.app/api`;
-
-
+const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000/api'
+    : 'https://portfolio-production-a296.up.railway.app/api';
 // ===================================
 // CANVAS BACKGROUND
 // ===================================
@@ -150,7 +150,6 @@ if (btnMenu && sideMenu && closeMenu && menuOverlay) {
         menuOverlay.classList.remove('active');
     });
 
-    // Menu items
     const menuDashboard = document.getElementById('menu-dashboard');
     const menuAllData = document.getElementById('menu-all-data');
     const menuSettings = document.getElementById('menu-settings');
@@ -193,81 +192,145 @@ if (btnMenu && sideMenu && closeMenu && menuOverlay) {
 // CHARGEMENT MESSAGES
 // ===================================
 async function loadMessages() {
-    if (!messagesContainer) return;
-    messagesContainer.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>Chargement des messages...</p></div>';
+    if (!messagesContainer) {
+        console.error('❌ Element messages-container introuvable');
+        return;
+    }
+
+    messagesContainer.innerHTML = `
+        <div class="loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Chargement des messages...</p>
+        </div>
+    `;
 
     try {
+        console.log('📡 Chargement depuis:', `${API_URL}/messages`);
+
         const res = await fetch(`${API_URL}/messages`);
-        if (!res.ok) throw new Error('Erreur API');
-        messagesData = await res.json();
+        console.log('📥 Status:', res.status);
+
+        if (!res.ok) {
+            throw new Error(`Erreur HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log('📦 Données brutes API:', data);
+
+        // ✅ CORRECTION MAJEURE ICI
+        messagesData = Array.isArray(data)
+            ? data
+            : Array.isArray(data.messages)
+                ? data.messages
+                : [];
+
+        console.log('✅ Messages exploitables:', messagesData.length);
+
         displayMessages(messagesData);
         updateStats();
+
     } catch (err) {
-        messagesContainer.innerHTML = '<p style="color: var(--color-white); text-align: center;">Erreur de chargement des messages</p>';
-        console.error(err);
-        showNotification('Erreur de chargement', 'error');
+        console.error('❌ Erreur chargement:', err);
+
+        messagesContainer.innerHTML = `
+            <div style="color:white;text-align:center;padding:40px">
+                <h3>Erreur de chargement</h3>
+                <p>${err.message}</p>
+                <button onclick="loadMessages()">Réessayer</button>
+            </div>
+        `;
     }
 }
 
-function displayMessages(messages) {
-    if (!messagesContainer) return;
 
-    if (messages.length === 0) {
+function displayMessages(messages) {
+    if (!messagesContainer) {
+        console.error('❌ messages-container introuvable');
+        return;
+    }
+
+    console.log('🖼️ Affichage messages:', messages);
+
+    if (!Array.isArray(messages) || messages.length === 0) {
         messagesContainer.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-inbox"></i>
                 <h3>Aucun message trouvé</h3>
-                <p>Il n'y a aucun message correspondant à vos critères.</p>
             </div>
         `;
         return;
     }
 
-    messagesContainer.innerHTML = messages.map(m => `
-        <div class="message-card ${m.lu ? 'read' : 'unread'}" data-id="${m._id}">
-            <div class="message-status ${m.lu ? 'read' : 'unread'}">
-                <i class="fas ${m.lu ? 'fa-check-circle' : 'fa-envelope'}"></i>
-            </div>
-            <div class="message-content">
-                <div class="message-header">
-                    <div class="message-from">
-                        <h4>${m.nom}</h4>
-                        ${!m.lu ? '<span class="message-badge unread">Nouveau</span>' : ''}
-                    </div>
-                    <span class="message-date">${new Date(m.createdAt).toLocaleString('fr-FR')}</span>
-                </div>
-                <p class="message-subject">${m.sujet}</p>
-                <p class="message-preview">${m.message.substring(0, 120)}...</p>
-                <div class="message-footer">
-                    <span class="message-email">
-                        <i class="fas fa-envelope"></i>
-                        ${m.email}
-                    </span>
-                </div>
-            </div>
-        </div>
-    `).join('');
+    messagesContainer.innerHTML = messages.map(m => {
 
-    // Ajouter les événements de clic
+        // ✅ NORMALISATION DES CHAMPS
+        m.lu = m.lu ?? m.isRead ?? false;
+
+        const id = m._id || m.id || '';
+        const date = m.createdAt
+            ? new Date(m.createdAt).toLocaleString('fr-FR')
+            : 'Date inconnue';
+
+        return `
+            <div class="message-card ${m.lu ? 'read' : 'unread'}" data-id="${id}">
+                <div class="message-status ${m.lu ? 'read' : 'unread'}">
+                    <i class="fas ${m.lu ? 'fa-check-circle' : 'fa-envelope'}"></i>
+                </div>
+
+                <div class="message-content">
+                    <div class="message-header">
+                        <h4>${m.nom || 'Nom inconnu'}</h4>
+                        <span>${date}</span>
+                    </div>
+
+                    <p class="message-subject">${m.sujet || 'Sans sujet'}</p>
+                    <p class="message-preview">
+                        ${(m.message || '').substring(0, 120)}...
+                    </p>
+
+                    <small>
+                        <i class="fas fa-envelope"></i>
+                        ${m.email || 'Email inconnu'}
+                    </small>
+                </div>
+            </div>
+        `;
+    }).join('');
+
     document.querySelectorAll('.message-card').forEach(card => {
         card.addEventListener('click', () => {
             openMessageModal(card.dataset.id);
         });
     });
+
+    console.log('✅ Messages affichés');
 }
+
 
 // ===================================
 // MODAL MESSAGE
 // ===================================
 function openMessageModal(id) {
-    currentMessage = messagesData.find(m => m._id === id);
-    if (!currentMessage) return;
+    console.log('🔍 Recherche du message:', id);
+    
+    currentMessage = messagesData.find(m => (m._id === id || m.id === id));
+    
+    if (!currentMessage) {
+        console.error('❌ Message introuvable:', id);
+        console.log('📋 Messages disponibles:', messagesData.map(m => m._id || m.id));
+        showNotification('Message introuvable', 'error');
+        return;
+    }
 
-    document.getElementById('detail-nom').textContent = currentMessage.nom;
-    document.getElementById('detail-email').textContent = currentMessage.email;
-    document.getElementById('detail-sujet').textContent = currentMessage.sujet;
-    document.getElementById('detail-date').textContent = new Date(currentMessage.createdAt).toLocaleString('fr-FR');
-    document.getElementById('detail-message').textContent = currentMessage.message;
+    console.log('✅ Message trouvé:', currentMessage);
+
+    document.getElementById('detail-nom').textContent = currentMessage.nom || 'Nom inconnu';
+    document.getElementById('detail-email').textContent = currentMessage.email || 'Email inconnu';
+    document.getElementById('detail-sujet').textContent = currentMessage.sujet || 'Pas de sujet';
+    document.getElementById('detail-date').textContent = currentMessage.createdAt 
+        ? new Date(currentMessage.createdAt).toLocaleString('fr-FR') 
+        : 'Date inconnue';
+    document.getElementById('detail-message').textContent = currentMessage.message || 'Pas de message';
 
     readStatusText.textContent = currentMessage.lu ? 'Marquer comme non lu' : 'Marquer comme lu';
     responseText.value = '';
@@ -288,8 +351,10 @@ if (btnToggleRead) {
     btnToggleRead.addEventListener('click', async () => {
         if (!currentMessage) return;
 
+        const messageId = currentMessage._id || currentMessage.id;
+
         try {
-            const res = await fetch(`${API_URL}/messages/${currentMessage._id}/read`, {
+            const res = await fetch(`${API_URL}/messages/${messageId}/read`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ isRead: !currentMessage.lu })
@@ -332,8 +397,10 @@ function confirmDelete() {
     btnOk.onclick = async () => {
         if (!currentMessage) return;
 
+        const messageId = currentMessage._id || currentMessage.id;
+
         try {
-            const res = await fetch(`${API_URL}/messages/${currentMessage._id}`, {
+            const res = await fetch(`${API_URL}/messages/${messageId}`, {
                 method: 'DELETE'
             });
 
@@ -363,11 +430,13 @@ if (btnSendResponse) {
             return;
         }
 
+        const messageId = currentMessage._id || currentMessage.id;
+
         btnSendResponse.disabled = true;
         btnSendResponse.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
 
         try {
-            const res = await fetch(`${API_URL}/messages/${currentMessage._id}/reply`, {
+            const res = await fetch(`${API_URL}/messages/${messageId}/reply`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ response })
@@ -398,10 +467,10 @@ if (searchInput) {
     searchInput.addEventListener('input', () => {
         const query = searchInput.value.toLowerCase();
         const filtered = messagesData.filter(m =>
-            m.nom.toLowerCase().includes(query) ||
-            m.email.toLowerCase().includes(query) ||
-            m.sujet.toLowerCase().includes(query) ||
-            m.message.toLowerCase().includes(query)
+            (m.nom || '').toLowerCase().includes(query) ||
+            (m.email || '').toLowerCase().includes(query) ||
+            (m.sujet || '').toLowerCase().includes(query) ||
+            (m.message || '').toLowerCase().includes(query)
         );
         displayMessages(applyFilter(filtered));
     });
@@ -422,10 +491,10 @@ if (filterButtons) {
 
             if (query) {
                 filtered = filtered.filter(m =>
-                    m.nom.toLowerCase().includes(query) ||
-                    m.email.toLowerCase().includes(query) ||
-                    m.sujet.toLowerCase().includes(query) ||
-                    m.message.toLowerCase().includes(query)
+                    (m.nom || '').toLowerCase().includes(query) ||
+                    (m.email || '').toLowerCase().includes(query) ||
+                    (m.sujet || '').toLowerCase().includes(query) ||
+                    (m.message || '').toLowerCase().includes(query)
                 );
             }
 
@@ -483,12 +552,14 @@ async function updateStats() {
         if (!res.ok) throw new Error('Erreur stats');
 
         const stats = await res.json();
+        console.log('📊 Stats:', stats);
+        
         if (statTotal) statTotal.textContent = stats.total;
         if (statUnread) statUnread.textContent = stats.unread;
         if (statRead) statRead.textContent = stats.read;
         if (statToday) statToday.textContent = stats.today;
     } catch (err) {
-        console.error(err);
+        console.error('❌ Erreur stats:', err);
     }
 }
 
@@ -526,11 +597,11 @@ function showAllDataModal() {
                     <tbody>
                         ${messagesData.map(m => `
                             <tr>
-                                <td>${new Date(m.createdAt).toLocaleString('fr-FR')}</td>
-                                <td>${m.nom}</td>
-                                <td>${m.email}</td>
-                                <td>${m.sujet}</td>
-                                <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${m.message}</td>
+                                <td>${m.createdAt ? new Date(m.createdAt).toLocaleString('fr-FR') : 'N/A'}</td>
+                                <td>${m.nom || 'N/A'}</td>
+                                <td>${m.email || 'N/A'}</td>
+                                <td>${m.sujet || 'N/A'}</td>
+                                <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${m.message || 'N/A'}</td>
                                 <td>
                                     <span class="status-badge ${m.lu ? 'read' : 'unread'}">
                                         ${m.lu ? 'Lu' : 'Non lu'}
@@ -618,11 +689,11 @@ function exportData() {
     const csvContent = [
         ['Date', 'Nom', 'Email', 'Sujet', 'Message', 'Statut'].join(','),
         ...messagesData.map(m => [
-            new Date(m.createdAt).toLocaleString('fr-FR'),
-            `"${m.nom}"`,
-            m.email,
-            `"${m.sujet}"`,
-            `"${m.message.replace(/"/g, '""')}"`,
+            m.createdAt ? new Date(m.createdAt).toLocaleString('fr-FR') : 'N/A',
+            `"${m.nom || 'N/A'}"`,
+            m.email || 'N/A',
+            `"${m.sujet || 'N/A'}"`,
+            `"${(m.message || '').replace(/"/g, '""')}"`,
             m.lu ? 'Lu' : 'Non lu'
         ].join(','))
     ].join('\n');
@@ -641,6 +712,11 @@ function exportData() {
 // ===================================
 window.addEventListener('DOMContentLoaded', () => {
     const env = location.hostname === 'localhost' ? 'DÉVELOPPEMENT' : 'PRODUCTION';
-    console.log('Messages.js chargé - Environnement:', env);
+    console.log('═══════════════════════════════════════');
+    console.log('🎨 Messages.js chargé');
+    console.log('🌍 Environnement:', env);
+    console.log('🔗 API URL:', API_URL);
+    console.log('═══════════════════════════════════════');
+    
     loadMessages();
 });
