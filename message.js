@@ -4,6 +4,7 @@
 const API_URL = window.location.hostname === 'localhost' 
     ? 'http://localhost:3000/api'
     : 'https://portfolio-production-a296.up.railway.app/api';
+
 // ===================================
 // CANVAS BACKGROUND
 // ===================================
