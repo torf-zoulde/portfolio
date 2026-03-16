@@ -1,0 +1,279 @@
+/* ===================================================
+   messages-fix.css  v2
+   Correctifs : modal compacte + responsive mobile
+   Charger dans Messages.html APRÈS fol.css
+   =================================================== */
+
+/* ===================================
+   MODAL — taille raisonnable sur desktop
+=================================== */
+.modal {
+    padding: 16px;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    max-width: 620px;
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    border-radius: 18px;
+}
+
+/* Scrollbar discrète */
+.modal-content::-webkit-scrollbar { width: 5px; }
+.modal-content::-webkit-scrollbar-track { background: transparent; }
+.modal-content::-webkit-scrollbar-thumb {
+    background: rgba(255,107,53,0.4);
+    border-radius: 10px;
+}
+
+.modal-header { padding: 20px 24px; }
+.modal-header h2 { font-size: 1.3rem; }
+.modal-body    { padding: 20px 24px; }
+.modal-footer  { padding: 16px 24px; }
+
+.response-section textarea {
+    min-height: 90px;
+    max-height: 160px;
+    resize: vertical;
+}
+
+.message-text {
+    max-height: 160px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.detail-row {
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+}
+
+/* ===================================
+   HEADER ADMIN — mobile
+=================================== */
+@media (max-width: 768px) {
+    .admin-header {
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 12px 4%;
+        gap: 10px;
+        position: sticky;
+        top: 0;
+        z-index: 200;
+    }
+
+    .header-left {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+    }
+
+    .admin-header h2 {
+        font-size: 1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .logo { font-size: 1.3rem; }
+    .header-right { gap: 8px; }
+
+    .user-info span { display: none; }
+    .user-info { padding: 8px 12px; }
+
+    .btn-logout span { display: none; }
+    .btn-logout { padding: 8px 12px; }
+
+    .btn-menu { padding: 8px 12px; }
+    .btn-menu span { display: none; }
+}
+
+/* ===================================
+   STATS — 2 colonnes sur mobile
+=================================== */
+@media (max-width: 768px) {
+    .admin-main { padding: 16px 4%; }
+
+    .stats-section {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card { padding: 14px; gap: 12px; border-radius: 12px; }
+    .stat-icon  { width: 46px; height: 46px; font-size: 1.2rem; border-radius: 10px; flex-shrink: 0; }
+    .stat-info h3 { font-size: 1.6rem; }
+    .stat-info p  { font-size: 0.78rem; }
+}
+
+/* ===================================
+   FILTRES — mobile
+=================================== */
+@media (max-width: 768px) {
+    .filters-section {
+        padding: 14px;
+        gap: 10px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+    }
+
+    .search-box { min-width: unset; width: 100%; }
+
+    .filter-buttons {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .filter-btn {
+        padding: 8px 10px;
+        font-size: 0.78rem;
+        justify-content: center;
+        border-radius: 8px;
+    }
+
+    .btn-refresh { width: 100%; justify-content: center; padding: 10px; }
+}
+
+/* ===================================
+   CARTES MESSAGES — mobile
+=================================== */
+@media (max-width: 768px) {
+    .messages-container { padding: 14px; border-radius: 12px; }
+
+    .message-card {
+        flex-direction: row;
+        align-items: flex-start;
+        padding: 14px;
+        gap: 12px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
+
+    .message-status { width: 38px; height: 38px; font-size: 1rem; flex-shrink: 0; }
+
+    .message-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        margin-bottom: 6px;
+    }
+
+    .message-header h4   { font-size: 1rem; }
+    .message-header span { font-size: 0.75rem; }
+    .message-subject     { font-size: 0.85rem; margin-bottom: 4px; }
+    .message-preview     { font-size: 0.82rem; }
+    .message-card small  { font-size: 0.75rem; }
+}
+
+/* ===================================
+   MODAL MOBILE
+   La boîte entière scrolle — pas de sticky
+=================================== */
+@media (max-width: 768px) {
+
+    .modal {
+        padding: 0;
+        align-items: flex-end;   /* Drawer depuis le bas */
+    }
+
+    .modal-content {
+        max-width: 100%;
+        width: 100%;
+        height: 92vh;
+        max-height: 92vh;
+        border-radius: 20px 20px 0 0;
+        /* overflow-y: auto sur la boîte complète = tout scrolle librement */
+        overflow-y: auto;
+        animation: drawerSlideUp 0.3s ease;
+    }
+
+    @keyframes drawerSlideUp {
+        from { transform: translateY(60px); opacity: 0; }
+        to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    /* PAS de position sticky sur le header ni le footer */
+    .modal-header {
+        padding: 18px 18px 14px;
+        border-radius: 20px 20px 0 0;
+        position: static !important;
+    }
+
+    .modal-header h2 { font-size: 1.1rem; }
+
+    .modal-body { padding: 14px 18px; }
+
+    .modal-footer {
+        padding: 14px 18px 32px; /* 32px en bas pour iOS home bar */
+        flex-direction: column;
+        gap: 8px;
+        position: static !important;
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .btn-action {
+        width: 100%;
+        justify-content: center;
+        padding: 13px;
+    }
+
+    .response-section textarea {
+        min-height: 80px;
+        max-height: 120px;
+    }
+
+    .message-text { max-height: 100px; }
+
+    .detail-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+    }
+}
+
+/* ===================================
+   MENU LATÉRAL — mobile
+=================================== */
+@media (max-width: 768px) {
+    .side-menu { width: 100%; right: -100%; border-radius: 0; }
+    .side-menu.active { right: 0; }
+    .menu-item { padding: 15px 16px; font-size: 0.95rem; }
+}
+
+/* ===================================
+   MODALES SECONDAIRES
+=================================== */
+@media (max-width: 768px) {
+    .modal-small {
+        max-width: 100%;
+        width: 100%;
+        max-height: 92vh;
+        border-radius: 20px 20px 0 0;
+    }
+
+    .data-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ===================================
+   TRÈS PETITS ÉCRANS (< 480px)
+=================================== */
+@media (max-width: 480px) {
+    .stat-card  { padding: 12px 10px; }
+    .stat-icon  { width: 40px; height: 40px; font-size: 1rem; }
+    .stat-info h3 { font-size: 1.4rem; }
+    .stat-info p  { font-size: 0.72rem; }
+    .filter-btn   { font-size: 0.72rem; padding: 7px 6px; }
+    .admin-header { padding: 10px 3%; }
+    .logo { font-size: 1.1rem; }
+}
